@@ -1,65 +1,48 @@
 #include <iostream>
 #include <utility>
-#include <set>
-#include <vector>
+#include <queue>
 using namespace std;
 
 const int MAX_SIZE = 1000;
 typedef pair<int, int> P;
+typedef pair<int, P> Q;
 
-int calc(char f[][MAX_SIZE], vector<P> v, int H, int W) {
-  int c = 0;
-  int di[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
-  int dj[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
-  while(++c) {
-    vector<P> b;
-    set<P> s;
-    for (vector<P>::iterator it = v.begin(); it != v.end(); ++it) {
-      int i = it->first, j = it->second;
-      int n = 0;
-      for (int k = 0; k < 8; ++k) {
-        if (i + di[k] >= 0 && i + di[k] < H &&
-            j + dj[k] >= 0 && j + dj[k] < W &&
-            f[i + di[k]][j + dj[k]] == '.') {
-          n++;
-        }
-      }
-      if (n >= f[i][j] - '0') {
-        b.push_back(P(i, j));
-        for (int k = 0; k < 8; ++k) {
-          if (i + di[k] >= 0 && i + di[k] < H &&
-              j + dj[k] >= 0 && j + dj[k] < W &&
-              f[i + di[k]][j + dj[k]] != '.') {
-              s.insert(P(i + di[k], j + dj[k]));
-          }
-        }
-      }
+int calc(int f[][MAX_SIZE], queue<Q> q, int H, int W) {
+  P d[] = {P(-1, -1), P(-1, 0), P(-1, 1), P(0, -1), P(0, 1), P(1, -1), P(1, 0), P(1, 1)};
+  int n = 0;
+  while (q.size()) {
+    int c = q.front().first;
+    P p = q.front().second;
+    q.pop();
+    if (c > n) n++;
+    for (int k = 0; k < 8; ++k) {
+      int i = p.first  + d[k].first;
+      int j = p.second + d[k].second;
+      if (i >= 0 && i < H && j >= 0 && j < W && --f[i][j] == 0) {
+        q.push(Q(c + 1, P(i, j)));
+      };
     }
-    if (!b.size()) {
-      return c - 1;
-    }
-    for (vector<P>::iterator it = b.begin(); it != b.end(); ++it) {
-      f[it->first][it->second] = '.';
-      s.erase(P(it->first, it->second));
-    }
-    v = vector<P>(s.begin(), s.end());
   }
-  return 0;
+  return n;
 }
 
 int main() {
   int H, W;
-  char f[MAX_SIZE][MAX_SIZE];
-  set<P> s;
+  int f[MAX_SIZE][MAX_SIZE];
+  queue<Q> q;
+  char c[MAX_SIZE];
 
   cin >> H >> W;
   for (int i = 0; i < H; ++i) {
-    cin >> f[i];
+    cin >> c;
     for (int j = 0; j < W; ++j) {
-      if (f[i][j] != '.') {
-        s.insert(P(i, j));
+      if (c[j] == '.') {
+        f[i][j] = 0;
+        q.push(Q(0, P(i, j)));
+      } else {
+        f[i][j] = c[j] - '0';
       }
     }
   }
-  cout << calc(f, vector<P>(s.begin(), s.end()), H, W) << endl;
+  cout << calc(f, q, H, W) << endl;
 }
